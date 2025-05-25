@@ -14,6 +14,9 @@ const io=new Server(server,{
 });
 app.use(cors());
 
+io.on("connection",(socket)=>{
+    console.log("User Connected:",socket.id);
+})
 
 app.get('/',(req,res)=>{
     res.send("Server is Running")
