@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "../node_modules/nes.css/css/nes.css";
 
 *{
   font-family: "Press Start 2P", system-ui;

@@ -1,8 +1,50 @@
 import React, { useState, useEffect } from 'react';
+import { io } from 'socket.io-client'
+import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { setConnected } from '../redux/slices/socket/socketSlice';
+import { socket } from './socket';
+import { toast } from 'react-toast'
+import { setLoadingFalse, setLoadingTrue } from '../redux/slices/loader/loaderSlice';
+import Loader from './Loader/Loader';
 
 const Home = () => {
     const [selectedOption, setSelectedOption] = useState(0);
     const [currentTime, setCurrentTime] = useState(new Date());
+    const [start, setStart] = useState(false);
+    const navigate = useNavigate()
+    const dispatch = useDispatch();
+    const connected = useSelector((state) => state.socket.connected)
+    const loading = useSelector((state) => state.loader.isLoading)
+   
+    useEffect(() => {
+        if (!connected && start) {
+            socket.on('matchFound', (roomId) => {
+                dispatch(setConnected(roomId));
+                dispatch(setLoadingFalse());
+                navigate(`/duel/${roomId}`)
+            });
+        }
+        return () => socket.off('findMatch');
+    }, [dispatch, start, connected]);
+
+    useEffect(() => {
+        if (connected) {
+            socket.on('status', (msg) => {
+                // toast.info(msg)
+                console.log(msg)
+            })
+        }
+    }, [connected])
+
+
+    const handleFindMatch = (option) => {
+        if (option == "START GAME") {
+            dispatch(setLoadingTrue('Searching for a match...'))
+            socket.emit('findMatch');
+            setStart(true);
+        }
+    };
 
     const menuOptions = [
         { label: "START GAME", icon: "▶", command: "./start_game.sh" },
@@ -101,19 +143,6 @@ const Home = () => {
         </div>
     );
 
-    const ScrollingBanner = ({ text, speed = 20 }) => (
-        <div className="relative overflow-hidden bg-black border-y-4 border-cyan-400 py-2">
-            <div
-                className="whitespace-nowrap text-cyan-400 font-mono font-bold text-lg animate-pulse"
-                style={{
-                    animation: `scroll-left ${speed}s linear infinite`
-                }}
-            >
-                {text.repeat(5)}
-            </div>
-        </div>
-    );
-
     const TerminalWindow = () => (
         <div className="bg-black border-4 border-cyan-400 rounded-lg shadow-2xl overflow-hidden" style={{ width: '80%', height: '70%' }}>
             {/* Terminal title bar */}
@@ -157,19 +186,19 @@ const Home = () => {
                 <div className="text-center mb-6">
                     <pre className="text-cyan-400 font-bold text-xs leading-tight pixel-glow">
                         {`╔══════════════════════════════════════════════════════╗
-║   ██████╗  ██████╗  ██████╗  ██╗ ███╗   ██╗  ██████╗      ║
-║  ██╔════╝ ██╔═══██╗ ██╔══██╗ ██║ ████╗  ██║ ██╔════╝      ║
-║ ██║      ██║   ██║ ██║  ██║ ██║ ██╔██╗ ██║ ██║  ███╗     ║
-║ ██║      ██║   ██║ ██║  ██║ ██║ ██║╚██╗██║ ██║   ██║     ║
-║  ╚██████╗ ╚██████╔╝ ██████╔╝ ██║ ██║ ╚████║╚ ██████╔╝     ║
-║   ╚═════╝  ╚═════╝  ╚═════╝  ╚═╝ ╚═╝  ╚═══╝ ╚═════╝      ║
-╠══════════════════════════════════════════════════════╣
-║  ██████╗ ██╗   ██╗███████╗██╗                        ║
-║  ██╔══██╗██║   ██║██╔════╝██║                        ║
-║   ██║  ██║██║   ██║█████╗  ██║                        ║
-║   ██║  ██║██║   ██║██╔══╝  ██║                        ║
-║  ██████╔╝╚██████╔╝███████╗███████╗                   ║
-║  ╚═════╝  ╚═════╝ ╚══════╝╚══════╝                   ║
+  ██████╗  ██████╗  ██████╗  ██╗ ███╗   ██╗  ██████╗      
+ ██╔════╝ ██╔═══██╗ ██╔══██╗ ██║ ████╗  ██║ ██╔════╝      
+██║      ██║   ██║ ██║  ██║ ██║ ██╔██╗ ██║ ██║  ███╗     
+██║      ██║   ██║ ██║  ██║ ██║ ██║╚██╗██║ ██║   ██║     
+ ╚██████╗ ╚██████╔╝ ██████╔╝ ██║ ██║ ╚████║╚ ██████╔╝     
+ ╚═════╝  ╚═════╝  ╚═════╝  ╚═╝ ╚═╝  ╚═══╝ ╚═════╝      
+══════════════════════════════════════════════════════╣
+        ██████╗ ██╗   ██╗███████╗██╗                        
+        ██╔══██╗██║   ██║██╔════╝██║                        
+        ██║  ██║██║   ██║█████╗  ██║                        
+        ██║  ██║██║   ██║██╔══╝  ██║                        
+        ██████╔╝╚██████╔╝███████╗███████╗                   
+        ╚═════╝  ╚═════╝ ╚══════╝╚══════╝                   
 ╚══════════════════════════════════════════════════════╝`}
                     </pre>
                     <div className="text-yellow-400 text-xs mt-2 animate-pulse">
@@ -191,7 +220,7 @@ const Home = () => {
                                 : 'border-transparent hover:bg-gray-900 hover:bg-opacity-30'
                                 }`}
                             onMouseEnter={() => setSelectedOption(index)}
-                            onClick={() => console.log(`Executing: ${option.command}`)}
+                            onClick={() => handleFindMatch(option.label)}
                         >
                             <div className="w-6 text-center">
                                 {selectedOption === index && (
@@ -240,9 +269,19 @@ const Home = () => {
         </div>
     );
 
+
+
     return (
-        <div className="min-h-screen bg-black text-white font-mono relative overflow-hidden">
-            <style jsx>{`
+        <>
+            {
+                loading && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md">
+                        <Loader />
+                    </div>
+                )
+            }
+            <div className="min-h-screen bg-black text-white font-mono relative overflow-hidden">
+                <style jsx="true">{`
                 @keyframes scroll-left {
                     from { transform: translateX(100%); }
                     to { transform: translateX(-100%); }
@@ -268,80 +307,72 @@ const Home = () => {
                 }
             `}</style>
 
-            <PixelatedBackground />
-            <PixelParticles />
+                <PixelatedBackground />
+                <PixelParticles />
 
-            {/* Header */}
-            <div className="relative z-10 pt-8">
-                <ScrollingBanner text="★ WELCOME TO THE CODING ARCADE ★ CHALLENGE,CODE & WIN ★ " />
-            </div>
 
-            {/* Background Title */}
-            <div className="absolute top-32 left-0 right-0 text-center z-0">
-                <div className="relative">
-                    <h1 className="text-8xl font-black mb-4 pixel-glow opacity-30" style={{
-                        background: 'linear-gradient(90deg, #00ffff, #ff00ff, #ffff00, #00ff00)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        backgroundClip: 'text',
-                        textShadow: '6px 6px 0px #000000'
-                    }}>
-                        CODING
-                    </h1>
-                    <h1 className="text-8xl font-black mb-8 pixel-glow opacity-30" style={{
-                        background: 'linear-gradient(90deg, #ff00ff, #ffff00, #00ff00, #00ffff)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        backgroundClip: 'text',
-                        textShadow: '6px 6px 0px #000000'
-                    }}>
-                        DUEL
-                    </h1>
+                {/* Background Title */}
+                <div className="absolute top-32 left-0 right-0 text-center z-0">
+                    <div className="relative">
+                        <h1 className="text-8xl font-black mb-4 pixel-glow opacity-30" style={{
+                            background: 'linear-gradient(90deg, #00ffff, #ff00ff, #ffff00, #00ff00)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            backgroundClip: 'text',
+                            textShadow: '6px 6px 0px #000000'
+                        }}>
+                            CODING
+                        </h1>
+                        <h1 className="text-8xl font-black mb-8 pixel-glow opacity-30" style={{
+                            background: 'linear-gradient(90deg, #ff00ff, #ffff00, #00ff00, #00ffff)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            backgroundClip: 'text',
+                            textShadow: '6px 6px 0px #000000'
+                        }}>
+                            DUEL
+                        </h1>
 
-                    {/* Background Decorative pixels */}
-                    <div className="absolute -top-8 -left-8 opacity-50">
-                        <PixelDecoration color="#00ffff" pattern="diamond" />
+                        {/* Background Decorative pixels */}
+                        <div className="absolute -top-8 -left-8 opacity-50">
+                            <PixelDecoration color="#00ffff" pattern="diamond" />
+                        </div>
+                        <div className="absolute -top-8 -right-8 opacity-50">
+                            <PixelDecoration color="#ff00ff" pattern="heart" />
+                        </div>
+                        <div className="absolute -bottom-8 -left-8 opacity-50">
+                            <PixelDecoration color="#ffff00" pattern="cross" />
+                        </div>
+                        <div className="absolute -bottom-8 -right-8 opacity-50">
+                            <PixelDecoration color="#00ff00" pattern="diamond" />
+                        </div>
                     </div>
-                    <div className="absolute -top-8 -right-8 opacity-50">
-                        <PixelDecoration color="#ff00ff" pattern="heart" />
+                </div>
+
+                {/* Main Terminal */}
+                <div className="relative z-10 flex items-center justify-center min-h-screen p-8">
+                    <TerminalWindow />
+                </div>
+
+                {/* Stats/Info boxes */}
+                <div className="absolute bottom-16 left-8 right-8 flex justify-between z-10">
+                    <div className="bg-green-400 text-black border-4 border-green-600 px-4 py-2 font-bold">
+                        <div>SCORE: 999999</div>
+                        <div>HIGH: 999999</div>
                     </div>
-                    <div className="absolute -bottom-8 -left-8 opacity-50">
-                        <PixelDecoration color="#ffff00" pattern="cross" />
+
+                    <div className="bg-yellow-400 text-black border-4 border-yellow-600 px-4 py-2 font-bold">
+                        <div>LEVEL: 99</div>
+                        <div>LIVES: ♥♥♥</div>
                     </div>
-                    <div className="absolute -bottom-8 -right-8 opacity-50">
-                        <PixelDecoration color="#00ff00" pattern="diamond" />
+
+                    <div className="bg-red-400 text-black border-4 border-red-600 px-4 py-2 font-bold">
+                        <div>TIME: 999</div>
+                        <div>COINS: 99</div>
                     </div>
                 </div>
             </div>
-
-            {/* Main Terminal */}
-            <div className="relative z-10 flex items-center justify-center min-h-screen p-8">
-                <TerminalWindow />
-            </div>
-
-            {/* Stats/Info boxes */}
-            <div className="absolute bottom-16 left-8 right-8 flex justify-between z-10">
-                <div className="bg-green-400 text-black border-4 border-green-600 px-4 py-2 font-bold">
-                    <div>SCORE: 999999</div>
-                    <div>HIGH: 999999</div>
-                </div>
-
-                <div className="bg-yellow-400 text-black border-4 border-yellow-600 px-4 py-2 font-bold">
-                    <div>LEVEL: 99</div>
-                    <div>LIVES: ♥♥♥</div>
-                </div>
-
-                <div className="bg-red-400 text-black border-4 border-red-600 px-4 py-2 font-bold">
-                    <div>TIME: 999</div>
-                    <div>COINS: 99</div>
-                </div>
-            </div>
-
-            {/* Footer */}
-            <div className="relative z-10 pb-4">
-                <ScrollingBanner text="★ 1V1 CHALLENGES ★ CODING DUEL" speed={15} />
-            </div>
-        </div>
+        </>
     );
 };
 
