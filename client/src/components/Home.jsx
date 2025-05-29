@@ -7,6 +7,7 @@ import { socket } from './socket';
 import { toast } from 'react-toast'
 import { setLoadingFalse, setLoadingTrue } from '../redux/slices/loader/loaderSlice';
 import Loader from './Loader/Loader';
+import { setStartTime } from '../redux/slices/timer/timerSlice';
 
 const Home = () => {
     const [selectedOption, setSelectedOption] = useState(0);
@@ -19,8 +20,10 @@ const Home = () => {
    
     useEffect(() => {
         if (!connected && start) {
-            socket.on('matchFound', (roomId) => {
+            socket.on('matchFound', ({roomId,startTimestamp}) => {
                 dispatch(setConnected(roomId));
+                dispatch(setStartTime(10))
+                localStorage.setItem('timer_startTimestamp', JSON.stringify(startTimestamp));
                 dispatch(setLoadingFalse());
                 navigate(`/duel/${roomId}`)
             });

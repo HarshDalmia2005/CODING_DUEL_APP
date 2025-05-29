@@ -39,8 +39,9 @@ io.on('connection', (socket) => {
             socketRoomMap[player1.id] = roomId;
             socketRoomMap[player2.id] = roomId;
 
-            player1.emit('matchFound', roomId);
-            player2.emit('matchFound', roomId);
+            const startTimestamp=Date.now();
+            player1.emit('matchFound', {roomId,startTimestamp});
+            player2.emit('matchFound', {roomId,startTimestamp});
 
             console.log(`Match found! Room: ${roomId}`);
         }

@@ -4,7 +4,7 @@ import { socket } from '../socket'
 import { useNavigate } from 'react-router'
 import { setDisconnected } from '../../redux/slices/socket/socketSlice'
 import Timer from './Timer'
-import { setEnd, setStart } from '../../redux/slices/timer/timerSlice'
+import { setEnd, setStartTime } from '../../redux/slices/timer/timerSlice'
 import Popup from '../PopUpMsg/Popup'
 import { setClose, setOpen } from '../../redux/slices/popupMsg/popupSlice'
 import { Unplug } from 'lucide-react'
@@ -14,6 +14,7 @@ const Duel = () => {
     const connected = useSelector((state) => state.socket.connected)
     const isRunning = useSelector((state) => state.timer.isRunning)
     const isOpen = useSelector((state) => state.popup.isOpen)
+    const duration = useSelector((state) => state.timer.duration);
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
@@ -32,10 +33,13 @@ const Duel = () => {
     }, [dispatch, connected])
 
     useEffect(() => {
-        if (connected && !isRunning) {
-            dispatch(setStart(60))
+        const isRunning = JSON.parse(localStorage.getItem('timer_isRunning'));
+        const time = Number(localStorage.getItem('timer_time'));
+        const startTimestamp = Number(localStorage.getItem('timer_startTimestamp'));
+        if (connected && isRunning && time > 0 && startTimestamp) {
+            dispatch(setStartTime(time));
         }
-    }, [])
+    }, [connected, dispatch]);
 
     return (
         <>
