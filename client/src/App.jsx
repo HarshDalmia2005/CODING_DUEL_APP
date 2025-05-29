@@ -4,7 +4,7 @@ import viteLogo from '/vite.svg'
 import './App.css'
 import { Route, Routes } from 'react-router'
 import Home from './components/Home'
-import Duel from './components/Duel'
+import Duel from './components/Duel/Duel'
 
 function App() {
 
