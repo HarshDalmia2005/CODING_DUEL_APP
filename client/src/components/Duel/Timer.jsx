@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Clock } from 'lucide-react'
 import { useDispatch, useSelector } from 'react-redux';
 import { setEnd, updateTime } from '../../redux/slices/timer/timerSlice';
@@ -8,7 +8,7 @@ const Timer = () => {
     const dispatch = useDispatch();
     const time = useSelector((state) => state.timer.time)
     const isRunning = useSelector((state) => state.timer.isRunning)
-    const isOpen = useSelector((state) => state.popup.isOpen)
+    // const isOpen = useSelector((state) => state.popup.isOpen)
     const startTimestamp = localStorage.getItem('timer_startTimestamp')
     const duration = useSelector((state) => state.timer.duration);
 

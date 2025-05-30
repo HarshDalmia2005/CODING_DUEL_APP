@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { io } from 'socket.io-client'
+import {  } from 'socket.io-client'
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { setConnected } from '../redux/slices/socket/socketSlice';
 import { socket } from './socket';
-import { toast } from 'react-toast'
 import { setLoadingFalse, setLoadingTrue } from '../redux/slices/loader/loaderSlice';
 import Loader from './Loader/Loader';
 import { setStartTime } from '../redux/slices/timer/timerSlice';
@@ -22,14 +21,14 @@ const Home = () => {
         if (!connected && start) {
             socket.on('matchFound', ({roomId,startTimestamp}) => {
                 dispatch(setConnected(roomId));
-                dispatch(setStartTime(10))
+                dispatch(setStartTime(6000))
                 localStorage.setItem('timer_startTimestamp', JSON.stringify(startTimestamp));
                 dispatch(setLoadingFalse());
                 navigate(`/duel/${roomId}`)
             });
         }
         return () => socket.off('findMatch');
-    }, [dispatch, start, connected]);
+    }, [dispatch, start, connected,navigate]);
 
     useEffect(() => {
         if (connected) {
@@ -90,7 +89,7 @@ const Home = () => {
         </div>
     );
 
-    const PixelDecoration = ({ size = 32, color = '#00ffff', pattern = 'cross' }) => {
+    const PixelDecoration = ({ color = '#00ffff', pattern = 'cross' }) => {
         const patterns = {
             cross: [
                 '  ██  ',
