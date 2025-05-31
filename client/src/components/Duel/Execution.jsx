@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { socket } from '../socket';
-import { setDuelResult } from '../../redux/slices/duel/duelSlice';
-import { setOutput } from '../../redux/slices/editor/editorSlice';
+// import { setDuelResult } from '../../redux/slices/duel/duelSlice';
+import { setError, setOutput } from '../../redux/slices/editor/editorSlice';
+import { setLoadingFalse, setLoadingTrue } from '../../redux/slices/loader/loaderSlice';
 
 const Execution = () => {
     const dispatch = useDispatch();
@@ -11,6 +12,7 @@ const Execution = () => {
     const userId = socket.id
 
     const handleSubmit = () => {
+        
         socket.emit('submitCode', {
             room: roomId,
             userId: userId,
@@ -21,26 +23,42 @@ const Execution = () => {
         });
     }
 
+    const handleRun = () => {
+        dispatch(setLoadingTrue("Compiling code..."));
+        socket.emit('runCode', {
+            room: roomId,
+            userId: userId,
+            code: code,
+            language: language,
+            version: version,
+            stdin: input || ""
+        });
+    }
+
     useEffect(() => {
-        socket.on('duelResult', (result) => {
-            dispatch(setDuelResult(result));
+        socket.on('codeOuput', (result) => {
+            // dispatch(setDuelResult(result));
+            dispatch(setLoadingFalse());
             dispatch(setOutput(result.output))
+            dispatch(setError(result.error))
+            console.log(result.error)
             // console.log(result)
             console.log(result.output)
         });
-        return () => socket.off('duelResult');
+        return () => socket.off('codeOutput');
     }, [dispatch]);
 
     return (
         <div className='space-x-5'>
             <button
                 className='text-white shadow shadow-amber-50 p-3 rounded-xl text-md hover:bg-gray-800 hover:cursor-pointer'
-                onClick={handleSubmit}
+                onClick={handleRun}
             >
                 Run Code
             </button>
             <button
                 className='text-white shadow shadow-amber-50 p-3 rounded-xl text-md hover:bg-gray-800 hover:cursor-pointer'
+                onClick={handleSubmit}
             >
                 Submit Code
             </button>

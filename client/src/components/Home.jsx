@@ -7,6 +7,7 @@ import { socket } from './socket';
 import { setLoadingFalse, setLoadingTrue } from '../redux/slices/loader/loaderSlice';
 import Loader from './Loader/Loader';
 import { setStartTime } from '../redux/slices/timer/timerSlice';
+import { setProblem } from '../redux/slices/editor/editorSlice';
 
 const Home = () => {
     const [selectedOption, setSelectedOption] = useState(0);
@@ -19,9 +20,11 @@ const Home = () => {
    
     useEffect(() => {
         if (!connected && start) {
-            socket.on('matchFound', ({roomId,startTimestamp}) => {
+            socket.on('matchFound', ({roomId,startTimestamp,problem}) => {
                 dispatch(setConnected(roomId));
                 dispatch(setStartTime(6000))
+                dispatch(setProblem(problem))
+                console.log(problem)
                 localStorage.setItem('timer_startTimestamp', JSON.stringify(startTimestamp));
                 dispatch(setLoadingFalse());
                 navigate(`/duel/${roomId}`)

@@ -12,6 +12,8 @@ import CodeEditor from './CodeEditor'
 import Output from './Output'
 import Input from './Input'
 import Execution from './Execution'
+import ProblemCard from './ProblemCard'
+import { setLoadingFalse } from '../../redux/slices/loader/loaderSlice'
 
 const Duel = () => {
     // const roomId = useSelector((state) => state.socket.roomId)
@@ -27,6 +29,7 @@ const Duel = () => {
         dispatch(setDisconnected());
         dispatch(setEnd())
         dispatch(setClose())
+        dispatch(setLoadingFalse())
         navigate('/');
     }
     useEffect(() => {
@@ -60,12 +63,15 @@ const Duel = () => {
                 </div>
 
                 // code editor
-                <div className=' flex space-x-8 p-5'>
-                    <CodeEditor />
-                    <div className='w-full'>
-                        <Execution/>
-                        <Input />
-                        <Output />
+                <div className='flex flex-col'>
+                    <ProblemCard/>
+                    <div className=' flex space-x-8 p-5 max-w-screen'>
+                        <CodeEditor />
+                        <div className='w-full'>
+                            <Execution />
+                            <Input />
+                            <Output />
+                        </div>
                     </div>
                 </div>
             </div>

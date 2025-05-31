@@ -4,6 +4,7 @@ const mongoose = require('mongoose')
 const { Server } = require('socket.io')
 const cors = require('cors');
 const axios = require('axios');
+const { PROBLEMS } = require('./problems');
 require('dotenv').config();
 
 const app = express();
@@ -24,10 +25,9 @@ async function submitToPiston({ language, version, code, stdin }) {
         language,
         version,
         files: [{ name: 'main', content: code }],
-        stdin:stdin || ''
+        stdin: stdin || ''
     });
 
-    // console.log(response.data)
     return response.data;
 }
 
@@ -53,12 +53,29 @@ io.on('connection', (socket) => {
             socketRoomMap[player2.id] = roomId;
 
             const startTimestamp = Date.now();
-            player1.emit('matchFound', { roomId, startTimestamp });
-            player2.emit('matchFound', { roomId, startTimestamp });
+            const problem = PROBLEMS[Math.floor(Math.random() * PROBLEMS.length)];
+            player1.emit('matchFound', { roomId, startTimestamp, problem });
+            player2.emit('matchFound', { roomId, startTimestamp, problem });
 
             console.log(`Match found! Room: ${roomId}`);
         }
     });
+
+    socket.on('runCode', async (data) => {
+        const { room, userId, code, language, version, stdin } = data;
+        let result;
+        let executionTime = 0;
+        console.log(stdin)
+        try {
+            const start = Date.now();
+            result = await submitToPiston({ language, version, code, stdin });
+            executionTime = Date.now() - start;
+        } catch (err) {
+            result = { stdout: '', stderr: err.message || 'Execution failed' };
+        }
+
+        io.to(userId).emit('codeOuput', { output: result.run.stdout, error: result.run.stderr, executionTime });
+    })
 
     socket.on('submitCode', async (data) => {
         const { room, userId, code, language, version, stdin } = data;
@@ -84,7 +101,7 @@ io.on('connection', (socket) => {
 
         if (duelSubmissions[room].length === 1) {
             const first = duelSubmissions[room][0];
-            
+
             const firstCorrect = !first.stderr && first.stdout?.trim() !== '';
             if (firstCorrect) {
                 // console.log(first.stdout)
@@ -93,7 +110,7 @@ io.on('connection', (socket) => {
                     p1: first,
                     p2: null,
                     reason: 'First correct submission, wins by default',
-                    output:first.stdout
+                    output: first.stdout
                 });
                 delete duelSubmissions[room];
                 return;
@@ -123,7 +140,7 @@ io.on('connection', (socket) => {
                 reason = 'No correct submissions';
             }
 
-            io.to(room).emit('duelResult', { winner:winner?.userId, p1: first?.userId, p2: second?.userId, reason, output:winner?.stdout });
+            io.to(room).emit('duelResult', { winner: winner?.userId, p1: first?.userId, p2: second?.userId, reason, output: winner?.stdout });
             delete duelSubmissions[room];
         }
     });

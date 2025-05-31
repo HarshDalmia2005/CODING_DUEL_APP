@@ -3,8 +3,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { setInput } from '../../redux/slices/editor/editorSlice';
 
 const Input = () => {
-    const dispatch=useDispatch();
-    const input=useSelector((state)=>state.editor.input)
+  const dispatch = useDispatch();
+  const input = useSelector((state) => state.editor.input)
+
   return (
     <div className="bg-gray-900 text-white p-4 mt-4 rounded-md w-full shadow-md">
       <h3 className="text-sm font-semibold mb-2 text-gray-300">Input:</h3>
